@@ -1,5 +1,50 @@
 <div my-head></div>
-
+<style>
+  .im_dialogs_col {
+    max-height: 242px!important;
+  }
+  .im_dialogs_scrollable_wrap .im_dialog_wrap {
+    margin-top: 0;
+    height: 50px;
+  }
+  .im_dialog_message_wrap {
+    height: 50px;
+  }
+  .im_dialogs_scrollable_wrap a.im_dialog {
+    clear: both;
+    overflow: hidden;
+    color: #000;
+    padding: 0px 9px;
+    border-radius: 0;
+    height: 50px;
+  }
+  div.im_dialog_photo {
+    margin: 5px 12px 0 0;
+  }
+  .im_dialog_photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  .im_dialog_peer, .im_dialog_message {
+    font-size: 0.9em;
+  }
+  .im_dialog_peer {
+    margin-bottom: 5px;
+    margin-top: 5px;
+  }
+  .im_dialog_badge {
+    background: #64c270;
+    font-size: 11px;
+    padding: 5px;
+    border-radius: 11px;
+    min-width: 21px;
+    text-align: center;
+    margin-top: 0px;
+    margin-bottom: 4px;
+  }
+</style>
 <div class="im_page_wrap" ng-class="{im_page_peer_not_selected: !curDialog.peer}">
 
   <div class="im_page_split clearfix">
@@ -14,7 +59,7 @@
         </div>
       </div>
 
-      <div my-dialogs-list-mobile class="im_dialogs_col im_dialogs_scrollable_wrap mobile_scrollable_wrap">
+      <div id="im_dialogs_col" my-dialogs-list-mobile class="im_dialogs_col im_dialogs_scrollable_wrap mobile_scrollable_wrap">
 
         <div class="im_dialogs_empty_wrap" ng-if="isEmpty.contacts" my-vertical-position="0.4">
           <h3 class="im_dialogs_empty_header" my-i18n="im_no_contacts"></h3>

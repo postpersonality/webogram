@@ -1,13 +1,17 @@
 {
-  "name": "Telegram",
-  "description": "Telegram Web App.\nMore info & source code here: https://github.com/zhukov/webogram",
+  "name": "TeleKram",
+  "description": "Unofficcial Telegram Web App.\nMore info & source code here: https://github.com/zhukov/webogram",
   "version": "0.7.0",
   "type": "privileged",
   "launch_path": "/index.html",
+  "theme": "#868686",
+  "theme_color": "#868686",
+  "background_color": "#868686",
   "developer": {
     "name": "Igor Zhukov",
     "url": "https://github.com/zhukov"
   },
+  "origin": "app://telekram.arma7x.com",
   "installs_allowed_from": [
     "*"
   ],
@@ -17,8 +21,16 @@
     "push-register": "/index.html"
   }, {
     "notification": "/index.html"
+  }, {
+    "serviceworker-notification": "/index.html"
   }],
   "permissions": {
+    "serviceworker": {
+      "description": "Needed for assocating service worker"
+    },
+    "systemXHR": {
+      "description": "Required to load remote content"
+    },
     "desktop-notification": {
       "description": "Required to show new message notifications"
     },
@@ -34,7 +46,7 @@
       "access": "createonly"
     },
     "device-storage:pictures": {
-    "description": "Required for photos download",
+      "description": "Required for photos download",
       "access": "createonly"
     },
     "device-storage:sdcard": {
@@ -46,7 +58,7 @@
       "access": "createonly"
     },
     "audio-capture" : {
-    "description" : "Required to record voice messages"
+      "description" : "Required to record voice messages"
     }
   },
   "activities": {

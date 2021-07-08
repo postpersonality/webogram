@@ -50,9 +50,147 @@ angular.module('myApp.controllers', ['myApp.i18n'])
       WebPushApiManager.forceUnsubscribe()
     })
 
+    var CountrySelectModalControllerStatus = false
+    var SendCodeConfirmModalStatus = false;
+    var modal;
     var options = {dcID: 2, createNetworker: true}
     var countryChanged = false
     var selectedCountry = false
+
+    var keydownListener = function(e) {
+      if (CountrySelectModalControllerStatus) {
+        console.log('CountrySelectModalControllerStatus', e.key);
+        switch (e.key) {
+          case 'End':
+          case 'Backspace':
+          case 'EndCall':
+            e.preventDefault()
+            e.stopPropagation()
+            if (document.activeElement.tagName === 'INPUT') {
+              if (document.activeElement.value.length === 0) {
+                document.activeElement.blur()
+              }
+            } else {
+              modal.dismiss()
+            }
+            break;
+        }
+        return
+      } else if (SendCodeConfirmModalStatus) {
+        console.log('SendCodeConfirmModalStatus', e.key);
+        switch (e.key) {
+          case 'End':
+          case 'Backspace':
+          case 'EndCall':
+            e.preventDefault()
+            break;
+        }
+        return
+      } else if (window['ErrorServiceStatus']) {
+        e.preventDefault()
+        return
+      }
+      console.log('AppLoginController keydownListener', e.key);
+      switch (e.key) {
+        case 'Insert':
+        case 'SoftLeft':
+          if ($scope.credentials.phone_code_hash && !$scope.credentials.phone_code_valid) {
+            //var OPENSMS = document.getElementById('openSMS')
+            //if (OPENSMS) {
+              //OPENSMS.click()
+            //}
+            window.open('sms://+1')
+            break;
+          }
+          var IDD = document.getElementById('input_idd')
+          if (IDD) {
+            IDD.focus()
+          }
+          break;
+        case 'Home':
+        case 'SoftRight':
+          if ($scope.credentials.phone_code_hash && !$scope.credentials.phone_code_valid) {
+            break
+          }
+          $scope.sendCode()
+          break;
+        case 'Delete':
+        case 'Call':
+          if ($scope.credentials.phone_code_hash && !$scope.credentials.phone_code_valid) {
+            break
+          }
+          var PHONE = document.getElementById('input_phone_number')
+          if (PHONE) {
+            PHONE.focus()
+          }
+          break;
+        case 'End':
+        case 'Backspace':
+        case 'EndCall':
+          if ($scope.credentials.phone_code_hash && !$scope.credentials.phone_code_valid) {
+            if (document.activeElement.tagName === 'INPUT') {
+              if (document.activeElement.value.length > 0) {
+                e.preventDefault()
+                break
+              }
+            }
+            $scope.editPhone()
+            e.preventDefault()
+            e.stopPropagation()
+            break
+          }
+          if (document.activeElement.value.length === 0 && document.activeElement.tagName === 'INPUT') {
+            document.activeElement.blur()
+            e.preventDefault()
+            e.stopPropagation()
+          } else if (document.activeElement.value.length > 0 && document.activeElement.tagName === 'INPUT') {
+            e.preventDefault()
+            e.stopPropagation()
+          }
+          break;
+        case 'Enter':
+          if ($scope.credentials.phone_code_hash && !$scope.credentials.phone_code_valid) {
+            var SENDNEXT = document.getElementById('sendNext')
+            if (SENDNEXT) {
+              SENDNEXT.click()
+            }
+            break
+          }
+          $scope.chooseCountry()
+          break;
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+          if ($scope.credentials.phone_code_hash && !$scope.credentials.phone_code_valid) {
+            if (document.activeElement.tagName !== 'INPUT') {
+              var PHONECODE = document.getElementById('input_phone_code')
+              if (PHONECODE) {
+                PHONECODE.focus()
+              }
+            }
+          }
+          break;
+      }
+    }
+
+    var _init = function() {
+      console.log('AppLoginController $onInit');
+      document.activeElement.addEventListener('keydown', keydownListener);
+    };
+
+    _init();
+
+    $scope.$on('$destroy', function() {
+      console.log('AppLoginController $onDestroy');
+      document.activeElement.removeEventListener('keydown', keydownListener);
+    });
 
     $scope.credentials = {phone_country: '', phone_country_name: '', phone_number: '', phone_full: ''}
     $scope.progress = {}
@@ -60,14 +198,17 @@ angular.module('myApp.controllers', ['myApp.i18n'])
     $scope.about = {}
 
     $scope.chooseCountry = function () {
-      var modal = $modal.open({
+      modal = $modal.open({
         templateUrl: templateUrl('country_select_modal'),
         controller: 'CountrySelectModalController',
         windowClass: 'countries_modal_window mobile_modal',
         backdrop: 'single'
       })
 
-      modal.result.then(selectCountry)
+      modal.result.then(selectCountry).finally(function() {CountrySelectModalControllerStatus = false})
+      modal.opened.then(function() {
+        CountrySelectModalControllerStatus = true
+      });
     }
 
     function initPhoneCountry () {
@@ -199,11 +340,14 @@ angular.module('myApp.controllers', ['myApp.i18n'])
         return
       }
 
-      ErrorService.confirm({
+      SendCodeConfirmModalStatus = true
+
+      var modalErrorService = ErrorService.confirm({
         type: 'LOGIN_PHONE_CORRECT',
         country_code: $scope.credentials.phone_country,
         phone_number: $scope.credentials.phone_number
-      }).then(function () {
+      })
+      modalErrorService.then(function () {
         $scope.progress.enabled = true
 
         onContentLoaded(function () {
@@ -238,6 +382,7 @@ angular.module('myApp.controllers', ['myApp.i18n'])
               break
           }
         })['finally'](function () {
+          SendCodeConfirmModalStatus = false
           if ($rootScope.idle.isIDLE || tsNow() - authKeyStarted > 60000) {
             NotificationsManager.notify({
               title: 'Telegram',
@@ -246,6 +391,8 @@ angular.module('myApp.controllers', ['myApp.i18n'])
             })
           }
         })
+      }).finally(function() {
+        SendCodeConfirmModalStatus = false
       })
     }
 
@@ -468,6 +615,85 @@ angular.module('myApp.controllers', ['myApp.i18n'])
 
   .controller('AppIMController', function ($q, qSync, $scope, $location, $routeParams, $modal, $rootScope, $modalStack, MtpApiManager, AppUsersManager, AppChatsManager, AppMessagesManager, AppPeersManager, ContactsSelectService, ChangelogNotifyService, ErrorService, AppRuntimeManager, HttpsMigrateService, LayoutSwitchService, LocationParamsService, AppStickersManager) {
     $scope.$on('$routeUpdate', updateCurDialog)
+
+     var tabIndex = -1
+
+    var keydownListener = function(e) {
+      console.log('AppIMController keydownListener');
+      switch (e.key) {
+        case 'ArrowUp':
+          if (document.location.hash === '#/im') {
+            var list = document.getElementById("im_dialogs_col")
+            var nav = document.querySelectorAll('.im_dialog_wrap')
+            if (nav.length === 0) {
+              return
+            }
+            var move = tabIndex - 1
+            var targetElement = nav[move]
+            if (targetElement !== undefined) {
+              targetElement.focus()
+              targetElement.style.backgroundColor = '#c0c0c0'
+              if (nav[move + 1]) {
+                nav[move + 1].style.backgroundColor = '#fff'
+              }
+              tabIndex = move
+              list.scrollTop = (targetElement.offsetTop - 100)
+            }
+          }
+          break
+        case 'ArrowDown':
+          if (document.location.hash === '#/im') {
+            var list = document.getElementById("im_dialogs_col")
+            var nav = document.querySelectorAll('.im_dialog_wrap')
+            if (nav.length === 0) {
+              return
+            }
+            var move = tabIndex + 1
+            var targetElement = nav[move]
+            if (targetElement !== undefined) {
+              targetElement.focus()
+              targetElement.style.backgroundColor = '#c0c0c0'
+              if (nav[move - 1]) {
+                nav[move - 1].style.backgroundColor = '#fff'
+              }
+              tabIndex = move
+              list.scrollTop = (targetElement.offsetTop - 100)
+            }
+          }
+          break
+        case 'Enter':
+          if (document.location.hash === '#/im') {
+            var nav = document.querySelectorAll('.im_dialog_wrap')
+            var targetElement = nav[tabIndex]
+            if (targetElement) {
+              var mousedown = new Event('mousedown')
+              targetElement.children[0].dispatchEvent(mousedown)
+            }
+          }
+          break
+        case 'End':
+        case 'Backspace':
+        case 'EndCall':
+          if (document.location.hash !== '#/im') {
+            e.preventDefault()
+            e.stopPropagation()
+            window.history.back()
+          }
+          break
+      }
+    }
+
+    var _init = function() {
+      console.log('AppIMController $onInit');
+      document.activeElement.addEventListener('keydown', keydownListener);
+    };
+
+    _init();
+
+    $scope.$on('$destroy', function() {
+      console.log('AppIMController $onDestroy');
+      document.activeElement.removeEventListener('keydown', keydownListener);
+    });
 
     var pendingParams = false
     var pendingAttachment = false
@@ -5367,6 +5593,88 @@ angular.module('myApp.controllers', ['myApp.i18n'])
     $scope.search = {}
     $scope.slice = {limit: 20, limitDelta: 20}
 
+    var tabIndex = -1
+
+    var keydownListener = function(e) {
+      console.log('CountrySelectModalController keydownListener');
+      switch (e.key) {
+        case 'Enter':
+          var nav = document.querySelectorAll('.countries_modal_country_wrap')
+          var targetElement = nav[tabIndex]
+          if (targetElement) {
+            targetElement.children[0].click();
+          }
+          break
+        case 'Insert':
+        case 'SoftLeft':
+          var INPUT = document.getElementById('input_search_country')
+          if (INPUT) {
+            INPUT.focus()
+          }
+          break;
+        case 'ArrowUp':
+          var INPUT = document.getElementById('input_search_country')
+          if (INPUT) {
+            INPUT.blur()
+          }
+          var list = document.getElementById("countries_modal_col")
+          var nav = document.querySelectorAll('.countries_modal_country_wrap')
+          if (nav.length === 0) {
+            return
+          }
+          var move = tabIndex - 1
+          var targetElement = nav[move]
+          if (targetElement !== undefined) {
+            targetElement.focus()
+            targetElement.style.backgroundColor = '#c0c0c0'
+            if (nav[move + 1]) {
+              nav[move + 1].style.backgroundColor = '#fff'
+            }
+            tabIndex = move
+            list.scrollTop = (targetElement.offsetTop - 100)
+          }
+          break
+        case 'ArrowDown':
+          var INPUT = document.getElementById('input_search_country')
+          if (INPUT) {
+            INPUT.blur()
+          }
+          var list = document.getElementById("countries_modal_col")
+          var nav = document.querySelectorAll('.countries_modal_country_wrap')
+          if (nav.length === 0) {
+            return
+          }
+          var move = tabIndex + 1
+          var targetElement = nav[move]
+          if (targetElement !== undefined) {
+            targetElement.focus()
+            targetElement.style.backgroundColor = '#c0c0c0'
+            if (nav[move - 1]) {
+              nav[move - 1].style.backgroundColor = '#fff'
+            }
+            tabIndex = move
+            list.scrollTop = (targetElement.offsetTop - 100)
+          }
+          break
+      }
+    }
+
+    var _init = function() {
+      console.log('CountrySelectModalController $onInit');
+      //var INPUT = document.getElementById('input_search_country')
+      //if (INPUT) {
+      //  INPUT.focus()
+      //}
+      document.addEventListener('keydown', keydownListener);
+    };
+
+    _init();
+
+    $scope.$on('$destroy', function() {
+      console.log('CountrySelectModalController $onDestroy');
+      document.removeEventListener('keydown', keydownListener);
+    });
+
     var searchIndex = SearchIndexManager.createIndex()
 
     for (var i = 0; i < Config.CountryCodes.length; i++) {
@@ -5377,6 +5685,7 @@ angular.module('myApp.controllers', ['myApp.i18n'])
     }
 
     $scope.$watch('search.query', function (newValue) {
+      tabIndex = -1
       var filtered = false
       var results = {}
 

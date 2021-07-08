@@ -520,7 +520,7 @@
     "login_enter_number_description_md": "Please choose your country and enter your full phone number.\n\nNote that you need an existing account to log in to Telegram Web. To sign up for Telegram, use one of our {apps-link: mobile apps}.",
     "login_incorrect_number": "Onjuist telefoonnummer",
     "login_code_input_placeholder": "Code",
-    "login_tel_input_placeholder": "Telefoonnummer",
+    "login_tel_input_placeholder": "Telefoonnummer(press call)",
     "login_country_select_placeholder": "Land",
     "login_generating_key": "Sleutels genereren",
     "login_generating_keys_info": "Sleutels worden eenmalig gegenereerd. Dit kan een paar minuten duren op langzamere apparaten, even geduld.",

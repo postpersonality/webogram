@@ -4364,6 +4364,7 @@ angular.module('myApp.services', ['myApp.i18n', 'izhukov.utils'])
 
   .service('ErrorService', function ($rootScope, $modal, $window) {
     var shownBoxes = 0
+    window['ErrorServiceStatus'] = false
 
     function show (params, options) {
       if (shownBoxes >= 1) {
@@ -4385,6 +4386,40 @@ angular.module('myApp.services', ['myApp.i18n', 'izhukov.utils'])
       modal.result['finally'](function () {
         shownBoxes--
       })
+
+      var keydownListener = function(e) {
+        console.log('ErrorService.alert keydownListener', shownBoxes);
+        switch (e.key) {
+          case 'Home':
+          case 'SoftRight':
+            modal.close()
+            break;
+          case 'End':
+          case 'Backspace':
+          case 'EndCall':
+            modal.dismiss()
+            break;
+          case 'Enter':
+            modal.close()
+            break;
+        }
+      }
+
+      var _init = function() {
+        window['ErrorServiceStatus'] = true
+        console.log('ErrorService.alert $onInit');
+        document.addEventListener('keydown', keydownListener);
+      };
+
+      modal.result.finally(function() {
+        window['ErrorServiceStatus'] = false
+        console.log('ErrorService.alert $onDestroy');
+        document.removeEventListener('keydown', keydownListener);
+      });
+
+      modal.opened.then(function() {
+        _init()
+      });
 
       return modal
     }
@@ -4408,6 +4443,40 @@ angular.module('myApp.services', ['myApp.i18n', 'izhukov.utils'])
         scope: scope,
         windowClass: options.windowClass || 'confirm_modal_window'
       })
+
+      var keydownListener = function(e) {
+        console.log('ErrorService.confirm keydownListener', shownBoxes);
+        switch (e.key) {
+          case 'Home':
+          case 'SoftRight':
+            modal.close()
+            break;
+          case 'End':
+          case 'Backspace':
+          case 'EndCall':
+            modal.dismiss()
+            break;
+          case 'Enter':
+            modal.close()
+            break;
+        }
+      }
+
+      var _init = function() {
+        window['ErrorServiceStatus'] = true
+        console.log('ErrorService.confirm $onInit');
+        document.addEventListener('keydown', keydownListener);
+      };
+
+      modal.result.finally(function() {
+        window['ErrorServiceStatus'] = false
+        console.log('ErrorService.confirm $onDestroy');
+        document.removeEventListener('keydown', keydownListener);
+      });
+
+      modal.opened.then(function() {
+        _init()
+      });
 
       return modal.result
     }
